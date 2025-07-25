@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tic Tac Toe AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Tic Tac Toe AI</h1>
+        <div id="board" class="board"></div>
+        <button id="replay">Replay</button>
+    </div>
+
+    <script>
+        let board = Array(9).fill("");
+        const boardDiv = document.getElementById("board");
+
+        function renderBoard() {
+            boardDiv.innerHTML = "";
+            board.forEach((cell, i) => {
+                const cellDiv = document.createElement("div");
+                cellDiv.className = "cell";
+                cellDiv.innerText = cell;
+                cellDiv.onclick = () => handleClick(i);
+                boardDiv.appendChild(cellDiv);
+            });
+        }
+
+        function handleClick(i) {
+            if (board[i] !== "") return;
+
+            board[i] = "X";
+            renderBoard();
+            let winner = checkWinner(board);
+            if (winner) {
+                alertWinner(winner);
+                return;
+            }
+
+            fetch("/move", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ board })
+            })
+            .then(res => res.json())
+            .then(data => {
+                board[data.move] = "O";
+                renderBoard();
+                let winner = checkWinner(board);
+                if (winner) {
+                    alertWinner(winner);
+                }
+            });
+        }
+
+        function checkWinner(board) {
+            const lines = [
+                [0,1,2], [3,4,5], [6,7,8],
+                [0,3,6], [1,4,7], [2,5,8],
+                [0,4,8], [2,4,6]
+            ];
+            for (let line of lines) {
+                const [a, b, c] = line;
+                if (board[a] && board[a] === board[b] && board[b] === board[c]) {
+                    return board[a];
+                }
+            }
+            if (!board.includes("")) {
+                return "draw";
+            }
+            return null;
+        }
+
+        function alertWinner(winner) {
+            setTimeout(() => {
+                if (winner === "draw") {
+                    alert("It's a draw!");
+                } else {
+                    alert(`${winner} wins!`);
+                }
+            }, 100);
+        }
+
+        document.getElementById("replay").onclick = () => {
+            board = Array(9).fill("");
+            renderBoard();
+        };
+
+        renderBoard();
+    </script>
+</body>
+</html>
